@@ -12,6 +12,13 @@
 
 
 .github
+installer/publish/
+installer/*.msi
+installer/*.msidb
+installer/*.wixpdb
+installer/harvested.wxs
+installer/*.wixobj
+installer/lhm_exporter_*.msi
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs

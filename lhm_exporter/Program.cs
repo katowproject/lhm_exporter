@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.IO;
 using System.Security.Principal;
 using System.Text;
 using LibreHardwareMonitor.Hardware;
@@ -10,22 +11,56 @@ namespace lhm_exporter;
 
 internal static class Program
 {
+    private static readonly string LogDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "lhm_exporter", "logs");
+    private static readonly string LogFile = Path.Combine(LogDir, "error.log");
+
     public static async Task<int> Main(string[] args)
     {
-        if (!IsAdministrator())
+        try
         {
-            Console.Error.WriteLine("This exporter must be run as Administrator.");
+            Directory.CreateDirectory(LogDir);
+
+            if (!IsAdministrator())
+            {
+                Log("Not running as administrator. Exiting.");
+                Console.Error.WriteLine("This exporter must be run as Administrator.");
+                return 1;
+            }
+
+            var builder = Host.CreateApplicationBuilder(args);
+            builder.Services.AddWindowsService(options => options.ServiceName = "lhm_exporter");
+            builder.Services.AddHostedService<LhmExporterWorker>();
+            builder.Logging.ClearProviders();
+
+            using var host = builder.Build();
+            await host.RunAsync();
+            return 0;
+        }
+        catch (Exception ex)
+        {
+            LogException(ex);
             return 1;
         }
+    }
 
-        var builder = Host.CreateApplicationBuilder(args);
-        builder.Services.AddWindowsService(options => options.ServiceName = "lhm_exporter");
-        builder.Services.AddHostedService<LhmExporterWorker>();
-        builder.Logging.ClearProviders();
+    internal static void Log(string message)
+    {
+        try
+        {
+            var line = $"[{DateTime.UtcNow:O}] {message}{Environment.NewLine}";
+            File.AppendAllText(LogFile, line, Encoding.UTF8);
+        }
+        catch { }
+    }
 
-        using var host = builder.Build();
-        await host.RunAsync();
-        return 0;
+    internal static void LogException(Exception ex)
+    {
+        try
+        {
+            var header = $"[{DateTime.UtcNow:O}] Exception: {ex.GetType().FullName} - {ex.Message}{Environment.NewLine}";
+            File.AppendAllText(LogFile, header + ex.ToString() + Environment.NewLine + Environment.NewLine, Encoding.UTF8);
+        }
+        catch { }
     }
 
     internal static bool IsAdministrator()
@@ -275,6 +310,8 @@ internal sealed class LhmExporterWorker : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        await Task.Yield();
+
         Directory.CreateDirectory(_outputDirectory);
 
         var outputPath = Path.Combine(_outputDirectory, _outputFileName);
@@ -300,12 +337,25 @@ internal sealed class LhmExporterWorker : BackgroundService
             using var timer = new PeriodicTimer(_interval);
             do
             {
-                WriteSnapshot(computer, outputPath, tempPath);
+                try
+                {
+                    WriteSnapshot(computer, outputPath, tempPath);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error while writing snapshot");
+                    Program.LogException(ex);
+                }
             }
             while (await timer.WaitForNextTickAsync(stoppingToken));
         }
         catch (OperationCanceledException)
         {
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unhandled exception in ExecuteAsync");
+            Program.LogException(ex);
         }
         finally
         {
