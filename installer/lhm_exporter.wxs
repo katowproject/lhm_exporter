@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Product
+    Id="*"
+    Name="LHM Exporter"
+    Language="1033"
+    Version="1.0.0.0"
+    Manufacturer="lhm_exporter"
+    UpgradeCode="3d5e4b2d-4b31-4c93-9f65-1e0a9a0d1c41">
+
+    <Package InstallerVersion="500" Compressed="yes" InstallScope="perMachine" Platform="x64" />
+    <MajorUpgrade DowngradeErrorMessage="A newer version of LHM Exporter is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+
+    <Feature Id="MainFeature" Title="LHM Exporter" Level="1">
+      <ComponentGroupRef Id="ApplicationComponents" />
+    </Feature>
+  </Product>
+
+  <Fragment>
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="ProgramFiles64Folder">
+        <Directory Id="INSTALLFOLDER" Name="LHM Exporter" />
+      </Directory>
+    </Directory>
+  </Fragment>
+
+  <Fragment>
+    <ComponentGroup Id="ApplicationComponents" Directory="INSTALLFOLDER">
+      <Component Id="cmpLhmExporterExe" Guid="b6d4d3e0-7d1d-4a7f-9b6d-5ed0a5d5a5c1">
+        <File Id="filLhmExporterExe" Source="$(var.PublishDir)\lhm_exporter.exe" KeyPath="yes" />
+        <ServiceInstall
+          Id="svcInstall"
+          Name="lhm_exporter"
+          DisplayName="LHM Exporter"
+          Description="Exports LibreHardwareMonitor data to Prometheus textfile collector"
+          Start="auto"
+          Type="ownProcess"
+          ErrorControl="normal"
+          Vital="yes"
+          Account="LocalSystem" />
+        <ServiceControl
+          Id="svcControl"
+          Name="lhm_exporter"
+          Start="install"
+          Stop="both"
+          Remove="uninstall"
+          Wait="yes" />
+      </Component>
+    </ComponentGroup>
+  </Fragment>
+</Wix>

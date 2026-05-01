@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using System.Security.Principal;
 using System.Text;
 using LibreHardwareMonitor.Hardware;
@@ -82,13 +82,12 @@ internal static class Program
             }
 
             var (metricName, multiplier) = GetMetricDefinition(sensor.SensorType.ToString());
-            var parentHardwareType = NormalizeHardwareType(hardware.HardwareType.ToString());
             var labels = new Dictionary<string, string>
             {
                 ["parent_identifier"] = hardware.Identifier.ToString(),
                 ["parent_name"] = hardware.Name,
                 ["identifier"] = hardware.Identifier.ToString(),
-                ["device"] = parentHardwareType,
+                ["device"] = hardwareType,
                 ["name"] = NormalizeSensorName(sensor.Name),
                 ["index"] = sensor.Index.ToString(CultureInfo.InvariantCulture),
                 ["type"] = sensor.SensorType.ToString(),

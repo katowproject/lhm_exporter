@@ -26,10 +26,15 @@ function Resolve-PublishSource {
     $csproj = Get-ChildItem -Path $repoRoot -Recurse -Filter '*.csproj' -ErrorAction SilentlyContinue | Select-Object -First 1
 
     if ($null -ne $csproj) {
-        $publishDir = Join-Path $env:TEMP ('lhm_exporter_publish_' + [guid]::NewGuid().ToString('N'))
-        New-Item -ItemType Directory -Path $publishDir | Out-Null
-        Write-Host 'Publishing application...'
-        & dotnet publish $csproj.FullName -c Release -r win-x64 --self-contained false -o $publishDir | Out-Host
+        $publishDir = Join-Path $csproj.DirectoryName 'bin\Release\net8.0\win-x64\publish'
+        if (-not (Test-Path $publishDir)) {
+            $tempPublishDir = Join-Path $env:TEMP ('lhm_exporter_publish_' + [guid]::NewGuid().ToString('N'))
+            New-Item -ItemType Directory -Path $tempPublishDir | Out-Null
+            Write-Host 'Publishing application...'
+            & dotnet publish $csproj.FullName -c Release -r win-x64 --self-contained false -o $tempPublishDir | Out-Host
+            return $tempPublishDir
+        }
+
         return $publishDir
     }
 

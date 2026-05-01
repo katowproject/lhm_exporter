@@ -1,6 +1,19 @@
 # LHM Exporter Setup
 
-This guide explains how to install, run, and remove `lhm_exporter` in a simple way.
+This guide explains how to install, run, and remove `lhm_exporter` from source.
+
+If you want the simplest installation path, use the release package from GitHub Releases instead.
+
+## Requirements
+
+Before building from source, make sure you have:
+
+- Windows
+- .NET 8 SDK
+- PowerShell 5.1 or later
+- Administrator rights
+- LibreHardwareMonitor available in the repository or release folder
+- `windows_exporter` with textfile collector enabled
 
 ## What it does
 
