@@ -14,7 +14,7 @@ if ($null -eq $csproj) {
 New-Item -ItemType Directory -Path $PublishDir -Force | Out-Null
 
 Write-Host 'Publishing application...'
-& dotnet publish $csproj.FullName -c Release -r win-x64 --self-contained false -o $PublishDir | Out-Host
+& dotnet publish $csproj.FullName -c Release -r win-x64 --self-contained true -o $PublishDir | Out-Host
 
 $exePath = Join-Path $PublishDir 'lhm_exporter.exe'
 if (-not (Test-Path $exePath)) {
